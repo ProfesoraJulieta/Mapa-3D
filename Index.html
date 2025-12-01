@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoMarketing AI World</title>
+    <!-- Fuentes Modernas -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* RESET Y ESTILOS BASE */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        /* CAPA UI SUPERIOR */
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+            color: white;
+        }
+
+        h1 {
+            margin: 0;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #00f2ff, #0099ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #00ff00;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff00;
+            margin-right: 8px;
+        }
+
+        /* TOOLTIP (Etiqueta al pasar mouse) */
+        #tooltip {
+            position: absolute;
+            background: rgba(0, 10, 20, 0.9);
+            border: 1px solid #00f2ff;
+            padding: 10px 15px;
+            border-radius: 4px;
+            color: #fff;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            pointer-events: none;
+            display: none;
+            z-index: 20;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+            backdrop-filter: blur(4px);
+            text-align: center;
+        }
+
+        .tooltip-flag {
+            font-size: 24px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* PANEL LATERAL DE INFORMACIÓN */
+        #side-panel {
+            position: absolute;
+            top: 0;
+            right: -450px;
+            width: 400px;
+            height: 100vh;
+            background: rgba(12, 16, 24, 0.95);
+            backdrop-filter: blur(15px);
+            border-left: 2px solid #00f2ff;
+            box-shadow: -20px 0 50px rgba(0, 0, 0, 0.8);
+            transition: right 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 30;
+            overflow-y: auto;
+            color: #e0e0e0;
+        }
+
+        #side-panel.active {
+            right: 0;
+        }
+
+        .panel-content {
+            padding: 30px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            color: #ff4757;
+            font-size: 24px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .close-btn:hover {
+            transform: scale(1.2);
+        }
+
+        /* ESTILOS DE DATOS */
+        .country-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header-flag {
+            width: 100px;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            margin-bottom: 15px;
+        }
+
+        .country-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .data-group {
+            margin-bottom: 25px;
+        }
+
+        .data-row {
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 8px;
+        }
+
+        .data-label {
+            display: block;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: #00f2ff;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .data-value {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #ddd;
+        }
+
+        .wiki-extract {
+            font-style: italic;
+            color: #bbb;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #00f2ff;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .wiki-source {
+            text-align: right;
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .loading-pulse {
+            animation: pulse 1.5s infinite;
+            color: #00f2ff;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+    </style>
+
+    <!-- Importamos Three.js (Versión UMD para navegador) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <!-- Globe.gl depende de Three.js -->
+    <script src="https://unpkg.com/globe.gl"></script>
+</head>
+
+<body>
+
+    <div id="ui-layer">
+        <h1><span class="status-indicator"></span>Paises y sus caracteristicas</h1>
+        <div class="subtitle">Mapa 3D y Datos de 195 Paises</div>
+        <div id="loading-msg" style="color: #00f2ff; font-size: 0.8rem; margin-top: 5px;">Iniciando sistemas...</div>
+    </div>
+
+    <div id="globeViz"></div>
+
+    <!-- Tooltip Personalizado -->
+    <div id="tooltip"></div>
+
+    <div id="side-panel">
+        <div class="close-btn" onclick="closePanel()">✕</div>
+        <div class="panel-content" id="panel-dynamic">
+            <div style="margin-top: 50%; text-align: center; color: #555;">
+                <p>EXPLORANDO BASE DE DATOS MUNDIAL...</p>
+                <p style="font-size: 0.8rem">Selecciona un país.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables Globales
+        let world; // Instancia del globo
+        let mapData = null; // Datos GeoJSON
+        let moonMesh = null; // Objeto Luna
+        const tooltip = document.getElementById('tooltip');
+        const msgDiv = document.getElementById('loading-msg');
+
+        // 1. FUNCIÓN DE INICIO (Maneja reintentos si la librería tarda en bajar)
+        function initSystem() {
+            if (typeof Globe === 'undefined' || typeof THREE === 'undefined') {
+                console.log("Esperando librerías...");
+                setTimeout(initSystem, 200); // Reintentar en 200ms
+                return;
+            }
+
+            msgDiv.innerText = "Librería cargada. Generando esfera...";
+            createGlobe();
+        }
+
+        // 2. CREAR GLOBO
+        function createGlobe() {
+            const elem = document.getElementById('globeViz');
+            world = Globe()
+                (elem)
+                .backgroundColor('#000000')
+                .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+                .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
+                .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
+                .pointOfView({ altitude: 2.5 }) // Vista inicial alejada
+
+                // Configuración de Polígonos
+                .polygonCapColor(() => 'rgba(0, 100, 255, 0.1)')
+                .polygonSideColor(() => 'rgba(0, 242, 255, 0.1)')
+                .polygonStrokeColor(() => '#00f2ff') // Borde NEÓN visible
+                .polygonAltitude(0.008)
+
+                // HOVER
+                .onPolygonHover((hoverD) => {
+                    world
+                        .polygonCapColor(d => d === hoverD ? 'rgba(0, 242, 255, 0.4)' : 'rgba(0, 100, 255, 0.1)')
+                        .polygonStrokeColor(d => d === hoverD ? '#ffffff' : '#00f2ff');
+
+                    if (hoverD) {
+                        const flag = getFlagEmoji(hoverD.properties.ISO_A2);
+                        const name = hoverD.properties.ADMIN || hoverD.properties.NAME || "Desconocido";
+                        tooltip.style.display = 'block';
+                        tooltip.innerHTML = `<div class="tooltip-flag">${flag}</div><div><b>${name}</b></div>`;
+                    } else {
+                        tooltip.style.display = 'none';
+                    }
+                })
+                .onPolygonClick(d => fetchCountryDetails(d));
+
+            // --- AGREGAR LA LUNA ---
+            // Obtenemos la escena de Three.js que globe.gl crea internamente
+            const scene = world.scene();
+
+            // 1. Crear geometría y material
+            const moonGeometry = new THREE.SphereGeometry(10, 32, 32); // Radio 10 (aprox 1/10 tierra visualmente)
+            const moonMaterial = new THREE.MeshPhongMaterial({
+                map: new THREE.TextureLoader().load('https://unpkg.com/three-globe/example/img/moon.jpg')
+            });
+            moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
+
+            // 2. Añadir a la escena
+            scene.add(moonMesh);
+
+            // 3. Iluminación extra para la luna (Direccional para que tenga fase)
+            const moonLight = new THREE.DirectionalLight(0xffffff, 1);
+            moonLight.position.set(-100, 100, 100);
+            scene.add(moonLight);
+
+            // 4. Iniciar animación de órbita
+            animateMoon();
+
+
+            // Mover tooltip
+            window.addEventListener('mousemove', (e) => {
+                if (tooltip.style.display === 'block') {
+                    tooltip.style.left = `${e.clientX + 15}px`;
+                    tooltip.style.top = `${e.clientY + 15}px`;
+                }
+            });
+
+            // Si los datos ya llegaron, pintarlos ahora
+            if (mapData) {
+                msgDiv.innerText = "Renderizando fronteras...";
+                world.polygonsData(mapData);
+                world.controls().autoRotate = true;
+                world.controls().autoRotateSpeed = 0.5;
+                msgDiv.innerText = "Sistema Operativo.";
+            }
+        }
+
+        // Lógica de Órbita Lunar
+        let moonAngle = 0;
+        function animateMoon() {
+            if (moonMesh) {
+                moonAngle += 0.005; // Velocidad de órbita
+                // Orbita en el plano XZ a una distancia de 160 unidades
+                moonMesh.position.x = Math.cos(moonAngle) * 160;
+                moonMesh.position.z = Math.sin(moonAngle) * 160;
+                moonMesh.rotation.y += 0.01; // Rotación de la luna sobre sí misma
+            }
+            requestAnimationFrame(animateMoon);
+        }
+
+        // 3. DESCARGAR MAPA (GeoJSON)
+        const GEOJSON_URL = 'https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson';
+
+        msgDiv.innerText = "Descargando cartografía...";
+
+        fetch(GEOJSON_URL)
+            .then(res => res.json())
+            .then(data => {
+                mapData = data.features; // Guardar datos
+
+                // Si el globo ya existe, actualizarlo
+                if (world) {
+                    msgDiv.innerText = "Renderizando fronteras...";
+                    world.polygonsData(mapData);
+                    world.controls().autoRotate = true;
+                    world.controls().autoRotateSpeed = 0.5;
+                    msgDiv.innerText = "Sistema Operativo.";
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                msgDiv.innerText = "Error cargando mapa. Revisa conexión.";
+                msgDiv.style.color = "red";
+            });
+
+        // Iniciar todo
+        initSystem();
+
+        // --- FUNCIONES DE DATOS (Inteligencia) ---
+        async function fetchCountryDetails(d) {
+            if (!world) return;
+            world.controls().autoRotate = false;
+
+            const panel = document.getElementById('side-panel');
+            const container = document.getElementById('panel-dynamic');
+
+            // Obtener códigos
+            const isoCode = d.properties.ISO_A3 || d.properties.ADM0_A3;
+            const countryNameOriginal = d.properties.ADMIN || d.properties.NAME;
+
+            // Abrir panel
+            panel.classList.add('active');
+            container.innerHTML = `
+        <div class="country-header"><div class="country-name">${countryNameOriginal}</div></div>
+        <div class="loading-pulse">CONECTANDO A SATÉLITE...<br><span style="font-size:0.8em; color:#666;">Buscando ${isoCode}...</span></div>
+      `;
+
+            if (!isoCode || isoCode === "-99") {
+                container.innerHTML = `<p style="text-align:center; margin-top:50px;">Territorio sin código ISO válido.<br>(${countryNameOriginal})</p>`;
+                return;
+            }
+
+            try {
+                // API 1: RestCountries
+                const res = await fetch(`https://restcountries.com/v3.1/alpha/${isoCode}`);
+                if (!res.ok) throw new Error("País no encontrado en BD");
+                const dataArr = await res.json();
+                const data = dataArr[0];
+
+                // API 2: Wikipedia
+                const spanishName = data.translations?.spa?.common || data.name.common || countryNameOriginal;
+                let wikiExtract = "Sin resumen disponible.";
+                try {
+                    const wikiRes = await fetch(`https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(spanishName)}`);
+                    if (wikiRes.ok) {
+                        const wikiData = await wikiRes.json();
+                        // AHORA: Recorta el texto a 180 caracteres para que sea un dato corto
+                        if (wikiData.extract) wikiExtract = wikiData.extract.substring(0, 180) + "...";
+                    }
+                } catch (e) { console.log("Wiki skip"); }
+
+                // Formatear
+                const currency = data.currencies ? Object.values(data.currencies).map(c => `${c.name} (${c.symbol || '$'})`).join(', ') : 'N/A';
+                // Limitar lista de fronteras si es muy larga
+                let borders = data.borders ? data.borders.join(', ') : 'Ninguno';
+                if (borders.length > 30) borders = borders.substring(0, 30) + "...";
+
+                container.innerHTML = `
+          <div class="country-header">
+            <img src="${data.flags.svg}" class="header-flag">
+            <div class="country-name">${spanishName}</div>
+          </div>
+          <div class="wiki-extract">"${wikiExtract}"<div class="wiki-source">Fuente: Wikipedia</div></div>
+          
+          <div class="data-group">
+            <div class="data-row"><span class="data-label">Territorio</span><span class="data-value">${data.area.toLocaleString()} km²</span></div>
+            <div class="data-row"><span class="data-label">Población</span><span class="data-value">${data.population.toLocaleString()}</span></div>
+            <div class="data-row"><span class="data-label">Capital</span><span class="data-value">${data.capital ? data.capital[0] : 'N/A'}</span></div>
+            <div class="data-row"><span class="data-label">Región</span><span class="data-value">${data.region}</span></div>
+            <div class="data-row"><span class="data-label">Moneda</span><span class="data-value">${currency}</span></div>
+            <div class="data-row"><span class="data-label">Fronteras</span><span class="data-value">${borders}</span></div>
+          </div>
+        `;
+            } catch (error) {
+                container.innerHTML = `<p style="color:#ff4757; text-align:center;">Error recuperando datos.<br><small>${error.message}</small></p>`;
+            }
+        }
+
+        function closePanel() {
+            document.getElementById('side-panel').classList.remove('active');
+            if (world) world.controls().autoRotate = true;
+        }
+
+        function getFlagEmoji(countryCode) {
+            if (!countryCode) return '🌐';
+            return String.fromCodePoint(...countryCode.toUpperCase().split('').map(c => 127397 + c.charCodeAt()));
+        }
+    </script>
+</body>
+
+</html>
